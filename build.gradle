@@ -1,0 +1,57 @@
+buildscript {
+    ext.kotlin_version = '1.2.31'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+plugins {
+    id 'java'
+}
+
+group 'org.credentialengine.cer'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'kotlin'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+
+    // Utils
+    compile group: 'org.koin', name: 'koin-core', version: '0.9.3'
+    compile group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
+
+    // Database
+    compile group: 'org.apache.tinkerpop', name: 'gremlin-driver', version: '3.3.3'
+    compile group: 'org.postgresql', name: 'postgresql', version: '42.2.2'
+    compile group: 'redis.clients', name: 'jedis', version: '2.9.0'
+
+    // Logging
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+    compile group: 'io.github.microutils', name: 'kotlin-logging', version: '1.5.4'
+
+    // Connection pooling
+    compile group: 'org.apache.commons', name: 'commons-pool2', version: '2.6.0'
+    compile group: 'com.zaxxer', name: 'HikariCP', version: '3.2.0'
+
+    // Testing
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
