@@ -19,6 +19,8 @@ abstract class ParseCommand(
 
         try {
             parser.use { it -> it.parse() }
+            logger.debug { "Updating document index time." }
+            envelopeDatabase.updateIndexTime(id)
         } catch (e: Exception) {
             // When there's an error in graph interaction, we get a meaningless exception and
             // all subsequent interactions fail until the pool is reestablished.

@@ -5,6 +5,7 @@ import com.google.gson.JsonParser
 import com.zaxxer.hikari.HikariDataSource
 import mu.KotlinLogging
 import java.sql.Connection
+import java.sql.Timestamp
 
 data class JsonContext(val url: String, val jsonObject: JsonObject)
 data class JsonSchema(val id: Int, val name: String, val jsonObject: JsonObject)
@@ -75,6 +76,13 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
         }
 
         return schemas.toList()
+    }
+
+    fun updateIndexTime(envelopeId: Int): Boolean {
+        val statement = getConnection().prepareStatement("UPDATE envelopes SET last_graph_indexed_at = ? WHERE id = ?")
+        statement.setTimestamp(1, Timestamp(System.currentTimeMillis()))
+        statement.setInt(2, envelopeId)
+        return statement.execute()
     }
 
     fun getConnection(): Connection {
