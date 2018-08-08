@@ -14,22 +14,24 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
     private val logger = KotlinLogging.logger {}
 
     fun fetchEnvelope(envelopeId: Int): JsonObject? {
-        val query = "SELECT processed_resource FROM envelopes WHERE id = ?"
-        val statement = getConnection().prepareStatement(query)
-        statement.setInt(1, envelopeId)
-        var rs = statement.executeQuery()
+        connection.use {
+            val query = "SELECT processed_resource FROM envelopes WHERE id = ?"
+            val statement = it.prepareStatement(query)
+            statement.setInt(1, envelopeId)
+            var rs = statement.executeQuery()
 
-        if (!rs.next()) {
-            logger.info {"Could not find envelope $envelopeId."}
-            return null
+            if (!rs.next()) {
+                logger.info {"Could not find envelope $envelopeId."}
+                return null
+            }
+
+            return JsonParser().parse(rs.getString(1)).asJsonObject
         }
-
-        return JsonParser().parse(rs.getString(1)).asJsonObject
     }
 
     fun getAllEnvelopes(): ResultSetBatcher<Pair<Int, JsonObject>> {
         val query = "SELECT id, processed_resource FROM envelopes WHERE deleted_at IS NULL ORDER BY id"
-        val statement = getConnection().prepareStatement(query)
+        val statement = connection.prepareStatement(query)
         val batches = ResultSetBatcher(10, statement) { it ->
             Pair(it.getInt(1), JsonParser().parse(it.getString(2)).asJsonObject)
         }
@@ -37,55 +39,62 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
     }
 
     fun getTotalEnvelopes(): Int {
-        val totalSql = "SELECT COUNT(*) FROM envelopes WHERE deleted_at IS NULL"
-        val totalStatement = getConnection().prepareStatement(totalSql)
-        val rs = totalStatement.executeQuery()
-        rs.next()
-        return rs.getInt(1)
+        connection.use {
+            val totalSql = "SELECT COUNT(*) FROM envelopes WHERE deleted_at IS NULL"
+            val totalStatement = it.prepareStatement(totalSql)
+            val rs = totalStatement.executeQuery()
+            rs.next()
+            return rs.getInt(1)
+        }
     }
 
     fun getContexts(): List<JsonContext> {
-        val contexts = mutableListOf<JsonContext>()
+        connection.use {
+            val contexts = mutableListOf<JsonContext>()
 
-        val rs = getConnection()
-                .prepareStatement("SELECT url, context FROM json_contexts")
-                .executeQuery()
+            val rs = it
+                    .prepareStatement("SELECT url, context FROM json_contexts")
+                    .executeQuery()
 
-        while (rs.next())
-        {
-            val url = rs.getString(1)
-            val context = JsonParser().parse(rs.getString(2)).asJsonObject
-            contexts.add(JsonContext(url, context))
+            while (rs.next())
+            {
+                val url = rs.getString(1)
+                val context = JsonParser().parse(rs.getString(2)).asJsonObject
+                contexts.add(JsonContext(url, context))
+            }
+
+            return contexts.toList()
         }
-
-        return contexts.toList()
     }
 
     fun getSchemas(): List<JsonSchema> {
-        val schemas = mutableListOf<JsonSchema>()
-        val rs = getConnection()
-                .prepareStatement("SELECT id, NAME, SCHEMA FROM json_schemas")
-                .executeQuery()
+        connection.use {
+            val schemas = mutableListOf<JsonSchema>()
+            val rs = it
+                    .prepareStatement("SELECT id, NAME, SCHEMA FROM json_schemas")
+                    .executeQuery()
 
-        while (rs.next())
-        {
-            val id = rs.getInt(1)
-            val name = rs.getString(2)
-            val schema = JsonParser().parse(rs.getString(3)).asJsonObject
-            schemas.add(JsonSchema(id, name, schema))
+            while (rs.next())
+            {
+                val id = rs.getInt(1)
+                val name = rs.getString(2)
+                val schema = JsonParser().parse(rs.getString(3)).asJsonObject
+                schemas.add(JsonSchema(id, name, schema))
+            }
+
+            return schemas.toList()
         }
-
-        return schemas.toList()
     }
 
     fun updateIndexTime(envelopeId: Int): Boolean {
-        val statement = getConnection().prepareStatement("UPDATE envelopes SET last_graph_indexed_at = ? WHERE id = ?")
-        statement.setTimestamp(1, Timestamp(System.currentTimeMillis()))
-        statement.setInt(2, envelopeId)
-        return statement.execute()
+        connection.use {
+            val statement = it.prepareStatement("UPDATE envelopes SET last_graph_indexed_at = ? WHERE id = ?")
+            statement.setTimestamp(1, Timestamp(System.currentTimeMillis()))
+            statement.setInt(2, envelopeId)
+            return statement.execute()
+        }
     }
 
-    fun getConnection(): Connection {
-        return dataSource.connection
-    }
+    private val connection: Connection
+        get() = dataSource.connection
 }

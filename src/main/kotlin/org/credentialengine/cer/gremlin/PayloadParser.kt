@@ -119,14 +119,15 @@ abstract class PayloadParser(protected val sourcePool: GraphSourcePool,
         return parseDocument(json, otherId, otherType)
     }
 
-    protected fun compress(data: String): ByteArray {
+    protected fun compress(data: String): String {
         val bos = ByteArrayOutputStream(data.length)
         val gzip = GZIPOutputStream(bos)
         gzip.write(data.toByteArray())
         gzip.close()
         val compressed = bos.toByteArray()
         bos.close()
-        return compressed
+        val encodedBytes = Base64.getEncoder().encode(compressed)
+        return String(encodedBytes)
     }
 
     override fun close() {

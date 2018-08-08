@@ -12,7 +12,7 @@ class ResultSetWrapper(private val resultSet: ResultSet) {
     }
 }
 
-class ResultSetBatcher<T>(val batchSize: Int, preparedStatement: PreparedStatement, val resultSetMapper: (ResultSetWrapper) -> T) {
+class ResultSetBatcher<T>(val batchSize: Int, val preparedStatement: PreparedStatement, val resultSetMapper: (ResultSetWrapper) -> T) {
     val resultSet = preparedStatement.executeQuery()
     var lastNext = resultSet.next()
 
@@ -25,6 +25,10 @@ class ResultSetBatcher<T>(val batchSize: Int, preparedStatement: PreparedStateme
                     if (!lastNext) break
                     batch.add(resultSetMapper(ResultSetWrapper(resultSet)))
                     lastNext = resultSet.next()
+                }
+
+                if (!lastNext) {
+                    preparedStatement.connection.close()
                 }
 
                 return batch.toList()
