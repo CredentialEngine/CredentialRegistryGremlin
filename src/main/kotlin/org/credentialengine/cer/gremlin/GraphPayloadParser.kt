@@ -24,7 +24,9 @@ class GraphPayloadParser(
     override fun parseDocument(json: JsonObject,
                                id: String,
                                type: String) {
-        var v = findOrCreateV(id, type).property(VertexProperty.Cardinality.single, Constants.PAYLOAD_PROPERTY, compress(json.toString()))
+        var v = findOrCreateV(id, type).property(
+                    VertexProperty.Cardinality.single,
+                    Constants.PAYLOAD_PROPERTY, compress(json.toString()))
 
         for (entry in json.entrySet()) {
             val key = entry.key

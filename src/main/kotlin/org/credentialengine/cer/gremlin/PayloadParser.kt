@@ -126,8 +126,8 @@ abstract class PayloadParser(protected val sourcePool: GraphSourcePool,
         gzip.close()
         val compressed = bos.toByteArray()
         bos.close()
-        val encodedBytes = Base64.getEncoder().encode(compressed)
-        return String(encodedBytes)
+        val encodedBytes = String(Base64.getEncoder().encode(compressed))
+        return "compressed:$encodedBytes"
     }
 
     override fun close() {
