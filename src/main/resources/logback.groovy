@@ -6,14 +6,14 @@ appender("STDOUT", ConsoleAppender) {
     }
 }
 
-gremlinHome = System.getenv("GREMLIN_HOME")
-if (gremlinHome != null) {
+gremlinLogs = System.getenv("GREMLIN_LOG_FOLDER")
+if (gremlinLogs != null) {
     appender("ROLLING", RollingFileAppender) {
         encoder(PatternLayoutEncoder) {
             Pattern = "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
         }
         rollingPolicy(TimeBasedRollingPolicy) {
-            FileNamePattern = "${gremlinHome}/log/gremlin-cer-%d{yyyy-MM-dd}.zip"
+            FileNamePattern = "${gremlinLogs}/gremlin-cer-%d{yyyy-MM-dd}.zip"
         }
     }
     appenders.add("ROLLING")
