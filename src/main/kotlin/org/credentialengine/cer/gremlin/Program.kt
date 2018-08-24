@@ -50,3 +50,7 @@ fun main(args : Array<String>) {
     redisListener.listen()
     logger.info { "Listening to messages" }
 }
+
+class Program {
+
+}

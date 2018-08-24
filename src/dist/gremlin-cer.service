@@ -1,0 +1,16 @@
+[Unit]
+Description=gremlin-cer service
+After=syslog.target
+
+[Service]
+User=gremlin-cer
+SuccessExitStatus=143
+ExecStart=/opt/gremlin/gremlin-cer/bin/gremlin-cer
+WorkingDirectory=/opt/gremlin/gremlin-cer
+Type=notify
+NotifyAccess=all
+Restart=on-failure
+RestartSec=15s
+
+[Install]
+WantedBy=multi-user.target
