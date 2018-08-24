@@ -21,3 +21,4 @@ if (gremlinLogs != null) {
 
 root(ERROR, appenders)
 logger("org.credentialengine.cer.gremlin", INFO, appenders, false)
+logger("com.zaxxer.hikari.pool", DEBUG, appenders, false)
