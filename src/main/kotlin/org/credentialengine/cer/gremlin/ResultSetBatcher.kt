@@ -47,6 +47,8 @@ class ResultSetBatcher<T>(
     }
 
     override fun close() {
-        connection.close()
+        if (!connection.isClosed) {
+            connection.close()
+        }
     }
 }
