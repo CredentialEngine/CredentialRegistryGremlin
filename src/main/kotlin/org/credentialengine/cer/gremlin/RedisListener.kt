@@ -5,11 +5,12 @@ import mu.KotlinLogging
 import org.credentialengine.cer.gremlin.commands.*
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
+import java.io.Closeable
 import kotlin.concurrent.thread
 
 data class GremlinCerMessage(val command: String, val id: Int)
 
-class RedisListener(val jedisPool: JedisPool, val commandCreator: CommandCreator) {
+class RedisListener(val jedisPool: JedisPool, val commandCreator: CommandCreator) : Closeable {
     private val logger = KotlinLogging.logger {}
 
     @Volatile
@@ -71,5 +72,9 @@ class RedisListener(val jedisPool: JedisPool, val commandCreator: CommandCreator
                 }
             }
         }
+    }
+
+    override fun close() {
+        running = false
     }
 }

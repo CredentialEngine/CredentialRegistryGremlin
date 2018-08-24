@@ -31,11 +31,9 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
 
     fun getAllEnvelopes(): ResultSetBatcher<Pair<Int, JsonObject>> {
         val query = "SELECT id, processed_resource FROM envelopes WHERE deleted_at IS NULL ORDER BY id"
-        val statement = connection.prepareStatement(query)
-        val batches = ResultSetBatcher(10, statement) { it ->
+        return ResultSetBatcher<Pair<Int, JsonObject>>(10, connection, query) { it ->
             Pair(it.getInt(1), JsonParser().parse(it.getString(2)).asJsonObject)
         }
-        return batches
     }
 
     fun getTotalEnvelopes(): Int {

@@ -41,10 +41,12 @@ fun main(args : Array<String>) {
     val logger = KotlinLogging.logger {}
     var context = startKoin(listOf(cerModule))
     val redisListener = context.koinContext.get<RedisListener>()
+    val dbPool = context.koinContext.get<HikariDataSource>()
 
     Runtime.getRuntime().addShutdownHook(thread(false) {
         logger.info { "Shutting down." }
-        redisListener.running = false
+        redisListener.close()
+        dbPool.close()
     })
 
     redisListener.listen()

@@ -1,5 +1,6 @@
 package org.credentialengine.cer.gremlin
 
+import java.io.Closeable
 import java.sql.*
 
 class ResultSetWrapper(private val resultSet: ResultSet) {
@@ -12,7 +13,12 @@ class ResultSetWrapper(private val resultSet: ResultSet) {
     }
 }
 
-class ResultSetBatcher<T>(val batchSize: Int, val preparedStatement: PreparedStatement, val resultSetMapper: (ResultSetWrapper) -> T) {
+class ResultSetBatcher<T>(
+        val batchSize: Int,
+        val connection: Connection,
+        query: String,
+        val resultSetMapper: (ResultSetWrapper) -> T) :  Closeable {
+    val preparedStatement = connection.prepareStatement(query)
     val resultSet = preparedStatement.executeQuery()
     var lastNext = resultSet.next()
 
@@ -38,5 +44,9 @@ class ResultSetBatcher<T>(val batchSize: Int, val preparedStatement: PreparedSta
                 return lastNext
             }
         }
+    }
+
+    override fun close() {
+        connection.close()
     }
 }
