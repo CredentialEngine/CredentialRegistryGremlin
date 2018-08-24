@@ -14,8 +14,7 @@ import java.io.ByteArrayOutputStream
 import kotlin.collections.ArrayList
 
 abstract class PayloadParser(protected val sourcePool: GraphSourcePool,
-                             protected val relationships: Relationships,
-                             protected val jsonParent: JsonObject) : Closeable {
+                             protected val relationships: Relationships) : Closeable {
     private var completed = false
 
     private val logger = KotlinLogging.logger {}

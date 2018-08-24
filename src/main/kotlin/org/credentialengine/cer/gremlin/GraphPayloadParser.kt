@@ -8,17 +8,16 @@ import org.apache.tinkerpop.gremlin.structure.VertexProperty
 class GraphPayloadParser(
         traversal: GraphSourcePool,
         relationships: Relationships,
-        jsonParent: JsonObject,
-        val contexts: JsonContexts) : PayloadParser(traversal, relationships, jsonParent) {
+        val jsonParent: JsonObject,
+        val json: JsonObject,
+        val contexts: JsonContexts) : PayloadParser(traversal, relationships) {
     private val logger = KotlinLogging.logger {}
 
     override fun doParse() {
-        for (obj in jsonParent["@graph"].asJsonArray) {
-            val json = obj.asJsonObject
-            val id = extractId(json)
-            val type = extractType(json)
-            parseDocument(json, id, type)
-        }
+        val id = extractId(json)
+        val type = extractType(json)
+        logger.info { "Parsing inner @graph object $id." }
+        parseDocument(json, id, type)
     }
 
     override fun parseDocument(json: JsonObject,

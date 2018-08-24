@@ -8,13 +8,13 @@ import org.apache.tinkerpop.gremlin.structure.VertexProperty
 class ObsoletePayloadParser(
         sourcePool: GraphSourcePool,
         relationships: Relationships,
-        jsonParent: JsonObject) : PayloadParser(sourcePool, relationships, jsonParent) {
+        val json: JsonObject) : PayloadParser(sourcePool, relationships) {
     private val logger = KotlinLogging.logger {}
 
     override fun doParse() {
-        val id = extractId(jsonParent)
-        val type = extractType(jsonParent)
-        parseDocument(jsonParent, id, type)
+        val id = extractId(json)
+        val type = extractType(json)
+        parseDocument(json, id, type)
     }
 
     override fun parseDocument(json: JsonObject,

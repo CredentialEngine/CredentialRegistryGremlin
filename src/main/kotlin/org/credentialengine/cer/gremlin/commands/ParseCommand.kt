@@ -3,6 +3,7 @@ package org.credentialengine.cer.gremlin.commands
 import com.google.gson.JsonObject
 import mu.KotlinLogging
 import org.credentialengine.cer.gremlin.*
+import java.util.concurrent.atomic.AtomicInteger
 
 abstract class ParseCommand(
         envelopeDatabase: EnvelopeDatabase,
@@ -12,10 +13,15 @@ abstract class ParseCommand(
     private val logger = KotlinLogging.logger {}
 
     protected fun parseEnvelope(relationships: Relationships, id: Int, json: JsonObject) {
-        val parser = if (json.has("@graph"))
-            GraphPayloadParser(sourcePool, relationships, json, contexts)
-        else
-            ObsoletePayloadParser(sourcePool, relationships, json)
+        if (json.has("@graph")) {
+            parseFromGraph(json, relationships, id)
+        } else {
+            parseFromParent(relationships, json, id)
+        }
+    }
+
+    fun parseFromParent(relationships: Relationships, json: JsonObject, id: Int) {
+        val parser = ObsoletePayloadParser(sourcePool, relationships, json)
 
         try {
             parser.use { it -> it.parse() }
@@ -26,6 +32,32 @@ abstract class ParseCommand(
             // all subsequent interactions fail until the pool is reestablished.
             // Instead let's create another pool.
             logger.error(e) { "There was a problem when parsing the document." }
+        }
+    }
+
+    fun parseFromGraph(json: JsonObject, relationships: Relationships, id: Int) {
+        val graphItems = json["@graph"].asJsonArray.toList()
+        val parsedCount = AtomicInteger(0)
+        graphItems.parallelStream().forEach { graphJson ->
+            val parser = GraphPayloadParser(
+                    sourcePool,
+                    relationships,
+                    json,
+                    graphJson.asJsonObject,
+                    contexts)
+            try {
+                parser.use { it -> it.parse() }
+                parsedCount.incrementAndGet()
+            } catch (e: Exception) {
+                // When there's an error in graph interaction, we get a meaningless exception and
+                // all subsequent interactions fail until the pool is reestablished.
+                // Instead let's create another pool.
+                logger.error(e) { "There was a problem when parsing the document." }
+            }
+        }
+        if (parsedCount.get() == graphItems.count()) {
+            logger.debug { "Updating document index time." }
+            envelopeDatabase.updateIndexTime(id)
         }
     }
 }
