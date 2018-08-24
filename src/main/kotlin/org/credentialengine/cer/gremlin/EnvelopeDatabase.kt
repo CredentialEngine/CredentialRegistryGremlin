@@ -29,10 +29,20 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
         }
     }
 
-    fun getAllEnvelopes(): ResultSetBatcher<Pair<Int, JsonObject>> {
-        val query = "SELECT id, processed_resource FROM envelopes WHERE deleted_at IS NULL ORDER BY id"
-        return ResultSetBatcher(10, connection, query) { it ->
-            Pair(it.getInt(1), JsonParser().parse(it.getString(2)).asJsonObject)
+    fun getAllEnvelopeIds(): List<Int> {
+        connection.use {
+            val ids = mutableListOf<Int>()
+
+            val rs = it
+                    .prepareStatement("SELECT id FROM envelopes WHERE deleted_at IS NULL ORDER BY id")
+                    .executeQuery()
+
+            while (rs.next())
+            {
+                ids.add(rs.getInt(1))
+            }
+
+            return ids.toList()
         }
     }
 

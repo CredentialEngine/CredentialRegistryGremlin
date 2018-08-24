@@ -17,15 +17,12 @@ class IndexAll(
             logger.info {"Parsed $current out of $total envelopes (${String.format("%.2f", percent)}%)."}
         }
 
-        envelopeDatabase.getAllEnvelopes().use { batches ->
-            for (batch in batches)
-            {
-                for (env in batch) {
-                    logger.info {"Parsing envelope ${env.first}."}
-                    parseEnvelope(relationships, env.first, env.second)
-                    progress.increment()
-                }
-            }
+        for (id in envelopeDatabase.getAllEnvelopeIds())
+        {
+            val json = envelopeDatabase.fetchEnvelope(id)
+            logger.info {"Parsing envelope $id."}
+            parseEnvelope(relationships, id, json!!)
+            progress.increment()
         }
 
         buildRelationships(relationships)
