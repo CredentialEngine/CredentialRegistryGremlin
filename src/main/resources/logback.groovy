@@ -19,6 +19,5 @@ if (gremlinLogs != null) {
     appenders.add("ROLLING")
 }
 
-root(ERROR, appenders)
+root(WARN, appenders)
 logger("org.credentialengine.cer.gremlin", INFO, appenders, false)
-logger("com.zaxxer.hikari.pool", DEBUG, appenders, false)
