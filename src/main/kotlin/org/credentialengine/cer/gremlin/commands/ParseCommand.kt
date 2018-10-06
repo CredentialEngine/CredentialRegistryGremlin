@@ -37,8 +37,8 @@ abstract class ParseCommand(
 
     fun parseFromGraph(json: JsonObject, relationships: Relationships, id: Int) {
         val graphItems = json["@graph"].asJsonArray.toList()
-        val parsedCount = AtomicInteger(0)
-        graphItems.parallelStream().forEach { graphJson ->
+        var parsedCount = 0
+        for (graphJson in graphItems) {
             val parser = GraphPayloadParser(
                     sourcePool,
                     relationships,
@@ -47,7 +47,7 @@ abstract class ParseCommand(
                     contexts)
             try {
                 parser.use { it -> it.parse() }
-                parsedCount.incrementAndGet()
+                parsedCount =+ 1
             } catch (e: Exception) {
                 // When there's an error in graph interaction, we get a meaningless exception and
                 // all subsequent interactions fail until the pool is reestablished.
@@ -55,7 +55,7 @@ abstract class ParseCommand(
                 logger.error(e) { "There was a problem when parsing the document." }
             }
         }
-        if (parsedCount.get() == graphItems.count()) {
+        if (parsedCount == graphItems.count()) {
             logger.debug { "Updating document index time." }
             envelopeDatabase.updateIndexTime(id)
         }

@@ -2,6 +2,7 @@ package org.credentialengine.cer.gremlin
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
 import mu.KotlinLogging
 import org.apache.tinkerpop.gremlin.structure.VertexProperty
 
@@ -21,6 +22,7 @@ class ObsoletePayloadParser(
                                id: String,
                                type: String) {
         var v = findOrCreateV(id, type).property(VertexProperty.Cardinality.single, Constants.PAYLOAD_PROPERTY, compress(json.toString()))
+        val literals = mutableListOf<Pair<String, JsonPrimitive>>()
 
         for (entry in json.entrySet()) {
             val key = entry.key
@@ -49,7 +51,7 @@ class ObsoletePayloadParser(
                 }
                 EntryType.ARRAY_OF_LITERALS -> {
                     for (itemEntry in value.asJsonArray) {
-                        v = v.property(VertexProperty.Cardinality.list, key, getPrimitive(itemEntry.asJsonPrimitive))
+                        literals.add(Pair(key, getPrimitive(itemEntry.asJsonPrimitive)) as Pair<String, JsonPrimitive>)
                     }
                 }
                 EntryType.ARRAY_OF_REFERENCES -> {}
@@ -57,7 +59,17 @@ class ObsoletePayloadParser(
             }
         }
 
+        logger.debug { "Storing $id." }
         v.next()
+
+        for (chunk in literals.chunked(10)) {
+            logger.debug { "Adding literal chunk for $id." }
+            var vlist = findV(id)
+            for (literal in chunk) {
+                vlist = vlist.property(VertexProperty.Cardinality.list, literal.first, literal.second)
+            }
+            vlist.next()
+        }
     }
 
     private fun detect(value: JsonElement): EntryType {

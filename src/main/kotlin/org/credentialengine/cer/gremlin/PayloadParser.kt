@@ -34,6 +34,10 @@ abstract class PayloadParser(protected val sourcePool: GraphSourcePool,
         return createV(id, type)
     }
 
+    protected fun findV(id: String): GraphTraversal<Vertex, Vertex> {
+        return source.g.V().has(Constants.GRAPH_ID_PROPERTY, id)
+    }
+
     private fun recreateV(id: String, type: String): GraphTraversal<Vertex, Vertex> {
         preserveEdges(id, type)
         source.g.V().has(Constants.GRAPH_ID_PROPERTY, id).drop().iterate()
