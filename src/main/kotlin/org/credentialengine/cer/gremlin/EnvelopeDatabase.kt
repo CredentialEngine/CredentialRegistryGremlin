@@ -14,95 +14,114 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
     private val logger = KotlinLogging.logger {}
 
     fun fetchEnvelope(envelopeId: Int): JsonObject? {
-        connection.use {
+        var envelope: String? = null
+
+        dataSource.connection.use { con ->
             val query = "SELECT processed_resource FROM envelopes WHERE id = ?"
-            val statement = it.prepareStatement(query)
-            statement.setInt(1, envelopeId)
-            var rs = statement.executeQuery()
+            con.prepareStatement(query).use { sta ->
+                sta.setInt(1, envelopeId)
+                sta.executeQuery().use { rs ->
+                    if (rs.next()) {
+                        envelope = rs.getString(1)
 
-            if (!rs.next()) {
-                logger.info {"Could not find envelope $envelopeId."}
-                return null
+                    } else {
+                        logger.info {"Could not find envelope $envelopeId."}
+                    }
+                }
             }
-
-            return JsonParser().parse(rs.getString(1)).asJsonObject
         }
+
+        if (envelope != null) {
+            return JsonParser().parse(envelope).asJsonObject
+        }
+
+        return null
     }
 
     fun getAllEnvelopeIds(): List<Int> {
-        connection.use {
-            val ids = mutableListOf<Int>()
+        val ids = mutableListOf<Int>()
 
-            val rs = it
-                    .prepareStatement("SELECT id FROM envelopes WHERE deleted_at IS NULL ORDER BY id")
-                    .executeQuery()
-
-            while (rs.next())
-            {
-                ids.add(rs.getInt(1))
+        dataSource.connection.use { con ->
+            con.prepareStatement("SELECT id FROM envelopes WHERE deleted_at IS NULL ORDER BY id").use { sta ->
+                sta.executeQuery().use { rs ->
+                    while (rs.next())
+                    {
+                        ids.add(rs.getInt(1))
+                    }
+                }
             }
-
-            return ids.toList()
         }
+
+        return ids.toList()
     }
 
     fun getTotalEnvelopes(): Int {
-        connection.use {
+        var total = 0
+
+        dataSource.connection.use { con ->
             val totalSql = "SELECT COUNT(*) FROM envelopes WHERE deleted_at IS NULL"
-            val totalStatement = it.prepareStatement(totalSql)
-            val rs = totalStatement.executeQuery()
-            rs.next()
-            return rs.getInt(1)
+            con.prepareStatement(totalSql).use { sta ->
+                sta.executeQuery().use { rs ->
+                    rs.next()
+                    total = rs.getInt(1)
+                }
+            }
+
         }
+
+        return total
     }
 
     fun getContexts(): List<JsonContext> {
-        connection.use {
-            val contexts = mutableListOf<JsonContext>()
+        val contexts = mutableListOf<JsonContext>()
 
-            val rs = it
-                    .prepareStatement("SELECT url, context FROM json_contexts")
-                    .executeQuery()
-
-            while (rs.next())
-            {
-                val url = rs.getString(1)
-                val context = JsonParser().parse(rs.getString(2)).asJsonObject
-                contexts.add(JsonContext(url, context))
+        dataSource.connection.use { con ->
+            con.prepareStatement("SELECT url, context FROM json_contexts").use { sta ->
+                sta.executeQuery().use { rs ->
+                    while (rs.next())
+                    {
+                        val url = rs.getString(1)
+                        val context = JsonParser().parse(rs.getString(2)).asJsonObject
+                        contexts.add(JsonContext(url, context))
+                    }
+                }
             }
-
-            return contexts.toList()
         }
+
+        return contexts.toList()
     }
 
     fun getSchemas(): List<JsonSchema> {
-        connection.use {
-            val schemas = mutableListOf<JsonSchema>()
-            val rs = it
-                    .prepareStatement("SELECT id, NAME, SCHEMA FROM json_schemas")
-                    .executeQuery()
+        val schemas = mutableListOf<JsonSchema>()
 
-            while (rs.next())
-            {
-                val id = rs.getInt(1)
-                val name = rs.getString(2)
-                val schema = JsonParser().parse(rs.getString(3)).asJsonObject
-                schemas.add(JsonSchema(id, name, schema))
+        dataSource.connection.use { con ->
+            con.prepareStatement("SELECT id, NAME, SCHEMA FROM json_schemas").use { sta ->
+                sta.executeQuery().use { rs ->
+                    while (rs.next())
+                    {
+                        val id = rs.getInt(1)
+                        val name = rs.getString(2)
+                        val schema = JsonParser().parse(rs.getString(3)).asJsonObject
+                        schemas.add(JsonSchema(id, name, schema))
+                    }
+                }
             }
-
-            return schemas.toList()
         }
+
+        return schemas.toList()
     }
 
     fun updateIndexTime(envelopeId: Int): Boolean {
-        connection.use {
-            val statement = it.prepareStatement("UPDATE envelopes SET last_graph_indexed_at = ? WHERE id = ?")
-            statement.setTimestamp(1, Timestamp(System.currentTimeMillis()))
-            statement.setInt(2, envelopeId)
-            return statement.execute()
-        }
-    }
+        var updated = false
 
-    private val connection: Connection
-        get() = dataSource.connection
+        dataSource.connection.use { con ->
+            con.prepareStatement("UPDATE envelopes SET last_graph_indexed_at = ? WHERE id = ?").use { sta ->
+                sta.setTimestamp(1, Timestamp(System.currentTimeMillis()))
+                sta.setInt(2, envelopeId)
+                updated = sta.execute()
+            }
+        }
+
+        return updated
+    }
 }

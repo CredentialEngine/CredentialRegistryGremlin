@@ -18,10 +18,6 @@ val cerModule = applicationContext {
         hikariConfig.username = appConfig.databaseUsername
         hikariConfig.password = appConfig.databasePassword
         hikariConfig.maximumPoolSize = 10
-        hikariConfig.minimumIdle = 2
-        hikariConfig.idleTimeout = 2*60*1000
-        hikariConfig.leakDetectionThreshold = 60*1000
-        hikariConfig.maxLifetime = 5*60*1000
         HikariDataSource(hikariConfig)
     }
     bean { EnvelopeDatabase(get()) }
