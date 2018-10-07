@@ -17,7 +17,9 @@ val cerModule = applicationContext {
         hikariConfig.jdbcUrl = appConfig.databaseUrl
         hikariConfig.username = appConfig.databaseUsername
         hikariConfig.password = appConfig.databasePassword
+        hikariConfig.minimumIdle = 1
         hikariConfig.maximumPoolSize = 10
+        hikariConfig.maxLifetime = 60 * 2 * 1000
         HikariDataSource(hikariConfig)
     }
     bean { EnvelopeDatabase(get()) }
