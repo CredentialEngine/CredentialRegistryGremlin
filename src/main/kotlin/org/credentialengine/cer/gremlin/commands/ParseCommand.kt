@@ -47,7 +47,7 @@ abstract class ParseCommand(
                     contexts)
             try {
                 parser.use { it -> it.parse() }
-                parsedCount =+ 1
+                parsedCount += 1
             } catch (e: Exception) {
                 // When there's an error in graph interaction, we get a meaningless exception and
                 // all subsequent interactions fail until the pool is reestablished.
