@@ -16,10 +16,10 @@ class IndexOne(
     fun run(envelopeId: Int) {
         logger.info {"Indexing objects for envelope $envelopeId."}
 
-        val json = envelopeDatabase.fetchEnvelope(envelopeId) ?: return
+        val envelope = envelopeDatabase.fetchEnvelope(envelopeId) ?: return
 
         val relationships = Relationships()
-        parseEnvelope(relationships, envelopeId, json)
+        parseEnvelope(relationships, envelopeId, envelope)
         buildRelationships(relationships)
         removeOrphans()
 

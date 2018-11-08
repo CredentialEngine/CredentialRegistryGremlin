@@ -4,26 +4,32 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.zaxxer.hikari.HikariDataSource
 import mu.KotlinLogging
-import java.sql.Connection
 import java.sql.Timestamp
+import java.time.ZoneId
 
 data class JsonContext(val url: String, val jsonObject: JsonObject)
 data class JsonSchema(val id: Int, val name: String, val jsonObject: JsonObject)
+data class Envelope(val id: Int, val processedResource: JsonObject, val createdAt: Long, val updatedAt: Long)
+
+val zone = ZoneId.systemDefault()
 
 class EnvelopeDatabase(val dataSource: HikariDataSource) {
     private val logger = KotlinLogging.logger {}
 
-    fun fetchEnvelope(envelopeId: Int): JsonObject? {
-        var envelope: String? = null
+    fun fetchEnvelope(envelopeId: Int): Envelope? {
+        var envelope: Envelope? = null
 
         dataSource.connection.use { con ->
-            val query = "SELECT processed_resource FROM envelopes WHERE id = ?"
+            val query = "SELECT created_at, updated_at, processed_resource FROM envelopes WHERE id = ?"
             con.prepareStatement(query).use { sta ->
                 sta.setInt(1, envelopeId)
                 sta.executeQuery().use { rs ->
                     if (rs.next()) {
-                        envelope = rs.getString(1)
-
+                        envelope = Envelope(
+                                envelopeId,
+                                JsonParser().parse(rs.getString(3)).asJsonObject,
+                                rs.getTimestamp(1).toLocalDateTime().atZone(zone).toEpochSecond(),
+                                rs.getTimestamp(2).toLocalDateTime().atZone(zone).toEpochSecond())
                     } else {
                         logger.info {"Could not find envelope $envelopeId."}
                     }
@@ -32,7 +38,7 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
         }
 
         if (envelope != null) {
-            return JsonParser().parse(envelope).asJsonObject
+            return envelope
         }
 
         return null
@@ -81,7 +87,7 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
                     while (rs.next())
                     {
                         val url = rs.getString(1)
-                        val context = JsonParser().parse(rs.getString(2)).asJsonObject
+                        val context = JsonParser().parse(rs.getString(2)).asJsonObject.get("@context").asJsonObject
                         contexts.add(JsonContext(url, context))
                     }
                 }

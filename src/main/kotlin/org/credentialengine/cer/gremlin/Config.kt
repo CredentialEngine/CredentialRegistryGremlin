@@ -22,9 +22,9 @@ class Config {
             }
         }
     val databaseUsername: String
-        get() = System.getenv("POSTGRESQL_USERNAME") ?: "rmsaksida"
+        get() = System.getenv("POSTGRESQL_USERNAME") ?: "rsaksida"
     val databasePassword: String
-        get() = System.getenv("POSTGRESQL_PASSWORD") ?: "rmsaksida"
+        get() = System.getenv("POSTGRESQL_PASSWORD") ?: "rsaksida"
     val redisUrl: String
         get() = System.getenv("REDIS_URL") ?: "redis://localhost:6379"
 }

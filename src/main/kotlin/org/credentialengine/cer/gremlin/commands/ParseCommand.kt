@@ -12,16 +12,16 @@ abstract class ParseCommand(
             : Command(envelopeDatabase, sourcePool) {
     private val logger = KotlinLogging.logger {}
 
-    protected fun parseEnvelope(relationships: Relationships, id: Int, json: JsonObject) {
-        if (json.has("@graph")) {
-            parseFromGraph(json, relationships, id)
+    protected fun parseEnvelope(relationships: Relationships, id: Int, envelope: Envelope) {
+        if (envelope.processedResource.has("@graph")) {
+            parseFromGraph(relationships, envelope, id)
         } else {
-            parseFromParent(relationships, json, id)
+            parseFromParent(relationships, envelope, id)
         }
     }
 
-    fun parseFromParent(relationships: Relationships, json: JsonObject, id: Int) {
-        val parser = ObsoletePayloadParser(sourcePool, relationships, json)
+    fun parseFromParent(relationships: Relationships, envelope: Envelope, id: Int) {
+        val parser = ObsoletePayloadParser(sourcePool, relationships, envelope)
 
         try {
             parser.use { it -> it.parse() }
@@ -35,14 +35,14 @@ abstract class ParseCommand(
         }
     }
 
-    fun parseFromGraph(json: JsonObject, relationships: Relationships, id: Int) {
-        val graphItems = json["@graph"].asJsonArray.toList()
+    fun parseFromGraph(relationships: Relationships, envelope: Envelope, id: Int) {
+        val graphItems = envelope.processedResource["@graph"].asJsonArray.toList()
         var parsedCount = 0
         for (graphJson in graphItems) {
             val parser = GraphPayloadParser(
                     sourcePool,
                     relationships,
-                    json,
+                    envelope,
                     graphJson.asJsonObject,
                     contexts)
             try {

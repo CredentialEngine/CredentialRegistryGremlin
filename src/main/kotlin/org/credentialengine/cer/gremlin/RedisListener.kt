@@ -10,7 +10,10 @@ import kotlin.concurrent.thread
 
 data class GremlinCerMessage(val command: String, val id: Int)
 
-class RedisListener(val jedisPool: JedisPool, val commandCreator: CommandCreator) : Closeable {
+class RedisListener(
+        val jedisPool: JedisPool,
+        val commandCreator: CommandCreator,
+        val jsonContexts: JsonContexts) : Closeable {
     private val logger = KotlinLogging.logger {}
 
     @Volatile
@@ -64,6 +67,10 @@ class RedisListener(val jedisPool: JedisPool, val commandCreator: CommandCreator
                         "index_one" -> { commandCreator.create<IndexOne>().run(message.id) }
                         "index_all" -> {  commandCreator.create<IndexAll>().run() }
                         "delete_one" -> {  commandCreator.create<DeleteOne>().run(message.id) }
+                        "update_contexts" -> {
+                            jsonContexts.updateContexts()
+                            logger.info { "Done." }
+                        }
                     }
                 } catch (e: Exception) {
                     logger.error(e) { "There was a problem when processing the command." }

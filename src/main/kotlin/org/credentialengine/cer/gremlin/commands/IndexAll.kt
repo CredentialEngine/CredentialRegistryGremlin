@@ -19,9 +19,9 @@ class IndexAll(
 
         for (id in envelopeDatabase.getAllEnvelopeIds())
         {
-            val json = envelopeDatabase.fetchEnvelope(id)
+            val envelope = envelopeDatabase.fetchEnvelope(id)
             logger.info {"Parsing envelope $id."}
-            parseEnvelope(relationships, id, json!!)
+            parseEnvelope(relationships, id, envelope!!)
             progress.increment()
         }
 

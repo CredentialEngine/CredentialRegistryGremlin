@@ -109,7 +109,8 @@ abstract class PayloadParser(protected val sourcePool: GraphSourcePool,
     protected abstract fun parseDocument(
             json: JsonObject,
             id: String,
-            type: String)
+            type: String,
+            envelope: Envelope? = null)
 
     protected fun parseRelatedDocument(
             json: JsonObject,

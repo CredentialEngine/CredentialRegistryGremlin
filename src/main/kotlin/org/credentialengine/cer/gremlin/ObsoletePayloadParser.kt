@@ -9,18 +9,17 @@ import org.apache.tinkerpop.gremlin.structure.VertexProperty
 class ObsoletePayloadParser(
         sourcePool: GraphSourcePool,
         relationships: Relationships,
-        val json: JsonObject) : PayloadParser(sourcePool, relationships) {
+        val envelope: Envelope) : PayloadParser(sourcePool, relationships) {
     private val logger = KotlinLogging.logger {}
 
     override fun doParse() {
+        val json = envelope.processedResource
         val id = extractId(json)
         val type = extractType(json)
-        parseDocument(json, id, type)
+        parseDocument(json, id, type, envelope)
     }
 
-    override fun parseDocument(json: JsonObject,
-                               id: String,
-                               type: String) {
+    override fun parseDocument(json: JsonObject, id: String, type: String, envelope: Envelope?) {
         var v = findOrCreateV(id, type).property(VertexProperty.Cardinality.single, Constants.PAYLOAD_PROPERTY, compress(json.toString()))
         val literals = mutableListOf<Pair<String, JsonPrimitive>>()
 
@@ -57,6 +56,11 @@ class ObsoletePayloadParser(
                 EntryType.ARRAY_OF_REFERENCES -> {}
                 EntryType.NONE -> {}
             }
+        }
+
+        if (envelope != null) {
+            v = v.property(VertexProperty.Cardinality.single, "__created_at", envelope.createdAt)
+            v = v.property(VertexProperty.Cardinality.single, "__updated_at", envelope.updatedAt)
         }
 
         logger.debug { "Storing $id." }

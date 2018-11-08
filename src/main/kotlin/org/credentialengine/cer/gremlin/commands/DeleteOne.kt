@@ -16,7 +16,8 @@ class DeleteOne(
         logger.info {"Deleting objects for envelope $envelopeId."}
 
         val toBeDeleted = mutableSetOf<String>()
-        val json = envelopeDatabase.fetchEnvelope(envelopeId) ?: return
+        val envelope = envelopeDatabase.fetchEnvelope(envelopeId) ?: return
+        val json = envelope.processedResource
 
         if (json.has("@graph")) {
             for (obj in json["@graph"].asJsonArray) {

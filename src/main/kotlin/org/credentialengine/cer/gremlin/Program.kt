@@ -30,7 +30,7 @@ val cerModule = applicationContext {
         JedisPool(appConfig.redisUrl)
     }
     bean { CommandCreator() }
-    bean { RedisListener(get(), get()) }
+    bean { RedisListener(get(), get(), get()) }
     factory { CreateIndices(get(), get()) }
     factory { DeleteOne(get(), get()) }
     factory { IndexAll(get(), get(), get()) }

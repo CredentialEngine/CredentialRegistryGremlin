@@ -9,7 +9,7 @@ import org.apache.tinkerpop.gremlin.structure.VertexProperty
 class GraphPayloadParser(
         traversal: GraphSourcePool,
         relationships: Relationships,
-        val jsonParent: JsonObject,
+        val envelope: Envelope,
         val json: JsonObject,
         val contexts: JsonContexts) : PayloadParser(traversal, relationships) {
     private val logger = KotlinLogging.logger {}
@@ -18,12 +18,10 @@ class GraphPayloadParser(
         val id = extractId(json)
         val type = extractType(json)
         logger.info { "Parsing inner @graph object $id." }
-        parseDocument(json, id, type)
+        parseDocument(json, id, type, envelope)
     }
 
-    override fun parseDocument(json: JsonObject,
-                               id: String,
-                               type: String) {
+    override fun parseDocument(json: JsonObject, id: String, type: String, envelope: Envelope?) {
         var v = findOrCreateV(id, type).property(
                     VertexProperty.Cardinality.single,
                     Constants.PAYLOAD_PROPERTY, compress(json.toString()))
@@ -62,6 +60,11 @@ class GraphPayloadParser(
                 EntryType.NONE -> {
                 }
             }
+        }
+
+        if (envelope != null) {
+            v = v.property(VertexProperty.Cardinality.single, "__created_at", envelope.createdAt)
+            v = v.property(VertexProperty.Cardinality.single, "__updated_at", envelope.updatedAt)
         }
 
         logger.debug { "Storing $id." }
@@ -107,6 +110,6 @@ class GraphPayloadParser(
     }
 
     private fun isReferenceKey(key: String): Boolean {
-        return key != "ceterms:ctid" && contexts.isRefKey(jsonParent["@context"].asString, key)
+        return key != "ceterms:ctid" && contexts.isRefKey(envelope.processedResource["@context"].asString, key)
     }
 }
