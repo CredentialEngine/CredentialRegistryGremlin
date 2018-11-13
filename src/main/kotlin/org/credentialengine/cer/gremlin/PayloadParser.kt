@@ -141,7 +141,7 @@ abstract class PayloadParser(protected val sourcePool: GraphSourcePool,
     companion object {
         @JvmStatic
         protected fun sliceId(value: String): String {
-            return value.split("/").last()
+            return value.split("/").last().toLowerCase()
         }
 
         @JvmStatic
