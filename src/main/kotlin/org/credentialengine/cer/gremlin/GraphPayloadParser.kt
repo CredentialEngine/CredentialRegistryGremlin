@@ -65,6 +65,10 @@ class GraphPayloadParser(
         if (envelope != null) {
             v = v.property(VertexProperty.Cardinality.single, "__created_at", envelope.createdAt)
             v = v.property(VertexProperty.Cardinality.single, "__updated_at", envelope.updatedAt)
+
+            if (envelope.ctid == id) {
+                v = v.property(VertexProperty.Cardinality.single, "@context", envelope.context)
+            }
         }
 
         logger.debug { "Storing $id." }

@@ -9,7 +9,9 @@ import java.time.ZoneId
 
 data class JsonContext(val url: String, val jsonObject: JsonObject)
 data class JsonSchema(val id: Int, val name: String, val jsonObject: JsonObject)
-data class Envelope(val id: Int, val processedResource: JsonObject, val createdAt: Long, val updatedAt: Long)
+data class Envelope(val id: Int, val processedResource: JsonObject, val createdAt: Long, val updatedAt: Long, val ctid: String) {
+    val context: String = processedResource.get("@context").asString
+}
 
 val zone = ZoneId.systemDefault()
 
@@ -20,7 +22,7 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
         var envelope: Envelope? = null
 
         dataSource.connection.use { con ->
-            val query = "SELECT created_at, updated_at, processed_resource FROM envelopes WHERE id = ?"
+            val query = "SELECT created_at, updated_at, processed_resource, envelope_ceterms_ctid FROM envelopes WHERE id = ?"
             con.prepareStatement(query).use { sta ->
                 sta.setInt(1, envelopeId)
                 sta.executeQuery().use { rs ->
@@ -29,7 +31,8 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
                                 envelopeId,
                                 JsonParser().parse(rs.getString(3)).asJsonObject,
                                 rs.getTimestamp(1).toLocalDateTime().atZone(zone).toEpochSecond(),
-                                rs.getTimestamp(2).toLocalDateTime().atZone(zone).toEpochSecond())
+                                rs.getTimestamp(2).toLocalDateTime().atZone(zone).toEpochSecond(),
+                                rs.getString(4))
                     } else {
                         logger.info {"Could not find envelope $envelopeId."}
                     }
