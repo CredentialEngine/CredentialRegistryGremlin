@@ -13,8 +13,6 @@ data class Envelope(val id: Int, val processedResource: JsonObject, val createdA
     val context: String = processedResource.get("@context").asString
 }
 
-val zone = ZoneId.systemDefault()
-
 class EnvelopeDatabase(val dataSource: HikariDataSource) {
     private val logger = KotlinLogging.logger {}
 
@@ -30,8 +28,8 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
                         envelope = Envelope(
                                 envelopeId,
                                 JsonParser().parse(rs.getString(3)).asJsonObject,
-                                rs.getTimestamp(1).toLocalDateTime().atZone(zone).toEpochSecond(),
-                                rs.getTimestamp(2).toLocalDateTime().atZone(zone).toEpochSecond(),
+                                DateConversion.timestampToEpoch(rs.getTimestamp(1)),
+                                DateConversion.timestampToEpoch(rs.getTimestamp(2)),
                                 rs.getString(4))
                     } else {
                         logger.info {"Could not find envelope $envelopeId."}

@@ -3,8 +3,8 @@ package org.credentialengine.cer.gremlin.commands
 import mu.KotlinLogging
 import org.credentialengine.cer.gremlin.Constants
 import org.credentialengine.cer.gremlin.EnvelopeDatabase
+import org.credentialengine.cer.gremlin.GraphPayloadParser
 import org.credentialengine.cer.gremlin.GraphSourcePool
-import org.credentialengine.cer.gremlin.PayloadParser
 
 class DeleteOne(
         envelopeDatabase: EnvelopeDatabase,
@@ -23,14 +23,14 @@ class DeleteOne(
             for (obj in json["@graph"].asJsonArray) {
                 val innerJson = obj.asJsonObject
                 if (innerJson.has("@id")) {
-                    val id = PayloadParser.extractId(innerJson)
+                    val id = GraphPayloadParser.extractId(innerJson)
                     if (!id.startsWith(Constants.GENERATED_PREFIX)) {
                         toBeDeleted.add(id)
                     }
                 }
             }
         } else {
-            val id = PayloadParser.extractId(json)
+            val id = GraphPayloadParser.extractId(json)
             if (!id.startsWith(Constants.GENERATED_PREFIX)) {
                 toBeDeleted.add(id)
             }
