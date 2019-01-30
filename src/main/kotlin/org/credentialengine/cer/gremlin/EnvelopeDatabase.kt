@@ -49,7 +49,12 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
         val ids = mutableListOf<Int>()
 
         dataSource.connection.use { con ->
-            con.prepareStatement("SELECT id FROM envelopes WHERE deleted_at IS NULL ORDER BY id").use { sta ->
+            con.prepareStatement("" +
+                    "SELECT id " +
+                    "FROM envelopes " +
+                    "WHERE deleted_at IS NULL " +
+                    "AND (processed_resource->'@graph') IS NOT NULL " +
+                    "ORDER BY id").use { sta ->
                 sta.executeQuery().use { rs ->
                     while (rs.next())
                     {

@@ -1,6 +1,5 @@
 package org.credentialengine.cer.gremlin
 
-import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
@@ -13,9 +12,10 @@ import java.io.Closeable
 import java.util.*
 import java.util.zip.GZIPOutputStream
 
-class GraphPayloadParser(
+open class GraphPayloadParser(
         val sourcePool: GraphSourcePool,
         val relationships: Relationships,
+        val relationshipsOnly: Boolean = false,
         val envelope: Envelope,
         val json: JsonObject,
         val contexts: JsonContexts) : Closeable {
@@ -31,6 +31,24 @@ class GraphPayloadParser(
     }
 
     fun parseDocument(json: JsonObject, id: String, type: String, envelope: Envelope?) {
+        if (relationshipsOnly) {
+            for (entry in json.entrySet()) {
+                val key = entry.key
+                val value = entry.value
+                val entryType = detect(key, value)
+
+                if (entryType == EntryType.REFERENCE) {
+                    addRelationship(id, key, sliceId(value.asString))
+                } else if (entryType == EntryType.ARRAY_OF_REFERENCES) {
+                    for (itemEntry in value.asJsonArray) {
+                        addRelationship(id, key, sliceId(itemEntry.asString))
+                    }
+                }
+            }
+
+            return
+        }
+
         var v = findOrCreateV(id, type).property(
                 VertexProperty.Cardinality.single,
                 Constants.PAYLOAD_PROPERTY, compress(json.toString()))
@@ -193,7 +211,7 @@ class GraphPayloadParser(
         }
     }
 
-    protected open fun getPrimitive(key: String, jsonPrimitive: JsonPrimitive): GraphPrimitive {
+    open fun getPrimitive(key: String, jsonPrimitive: JsonPrimitive): GraphPrimitive {
         if (jsonPrimitive.isBoolean) {
             return GraphPrimitive(false, jsonPrimitive.asBoolean, null, null)
         }

@@ -12,6 +12,8 @@ abstract class ParseCommand(
             : Command(envelopeDatabase, sourcePool) {
     private val logger = KotlinLogging.logger {}
 
+    protected open val relationshipsOnly = false
+
     protected fun parseEnvelope(relationships: Relationships, id: Int, envelope: Envelope) {
         if (envelope.processedResource.has("@graph")) {
             parseFromGraph(relationships, envelope, id)
@@ -27,6 +29,7 @@ abstract class ParseCommand(
             val parser = GraphPayloadParser(
                     sourcePool,
                     relationships,
+                    relationshipsOnly,
                     envelope,
                     graphJson.asJsonObject,
                     contexts)
@@ -40,7 +43,7 @@ abstract class ParseCommand(
                 logger.error(e) { "There was a problem when parsing the document." }
             }
         }
-        if (parsedCount == graphItems.count()) {
+        if (parsedCount == graphItems.count() && !relationshipsOnly) {
             logger.debug { "Updating document index time." }
             envelopeDatabase.updateIndexTime(id)
         }
