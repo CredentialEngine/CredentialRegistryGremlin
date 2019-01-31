@@ -37,11 +37,31 @@ open class GraphPayloadParser(
                 val value = entry.value
                 val entryType = detect(key, value)
 
-                if (entryType == EntryType.REFERENCE) {
-                    addRelationship(id, key, sliceId(value.asString))
-                } else if (entryType == EntryType.ARRAY_OF_REFERENCES) {
-                    for (itemEntry in value.asJsonArray) {
-                        addRelationship(id, key, sliceId(itemEntry.asString))
+                when (entryType) {
+                    EntryType.LITERAL -> {
+                        // Do nothing
+                    }
+                    EntryType.ARRAY_OF_LITERALS -> {
+                        // Do nothing
+                    }
+                    EntryType.OBJECT -> {
+                        parseRelatedDocument(value.asJsonObject, type, id, key)
+                    }
+                    EntryType.REFERENCE -> {
+                        addRelationship(id, key, sliceId(value.asString))
+                    }
+                    EntryType.ARRAY_OF_REFERENCES -> {
+                        for (itemEntry in value.asJsonArray) {
+                            addRelationship(id, key, sliceId(itemEntry.asString))
+                        }
+                    }
+                    EntryType.ARRAY_OF_OBJECTS -> {
+                        for (itemEntry in value.asJsonArray) {
+                            parseRelatedDocument(itemEntry.asJsonObject, type, id, key)
+                        }
+                    }
+                    EntryType.NONE -> {
+                        // Do nothing
                     }
                 }
             }
@@ -100,6 +120,7 @@ open class GraphPayloadParser(
                     }
                 }
                 EntryType.NONE -> {
+                    // Do nothing
                 }
             }
         }
@@ -270,7 +291,7 @@ open class GraphPayloadParser(
 
     companion object {
         @JvmStatic
-        protected fun sliceId(value: String): String {
+        fun sliceId(value: String): String {
             return value.split("/").last().toLowerCase()
         }
 

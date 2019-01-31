@@ -17,8 +17,9 @@ class IndexAll(
             logger.info {"Parsed $current out of $total envelopes (${String.format("%.2f", percent)}%)."}
         }
 
-        for (id in envelopeDatabase.getAllEnvelopeIds())
-        {
+        val ids = envelopeDatabase.getAllEnvelopeIds()
+
+        for (id in ids) {
             val envelope = envelopeDatabase.fetchEnvelope(id)
             logger.info {"Parsing envelope $id."}
             parseEnvelope(relationships, id, envelope!!)

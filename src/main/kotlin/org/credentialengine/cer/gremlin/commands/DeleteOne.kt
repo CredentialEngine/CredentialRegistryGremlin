@@ -1,10 +1,9 @@
 package org.credentialengine.cer.gremlin.commands
 
+import com.google.gson.JsonObject
 import mu.KotlinLogging
-import org.credentialengine.cer.gremlin.Constants
-import org.credentialengine.cer.gremlin.EnvelopeDatabase
-import org.credentialengine.cer.gremlin.GraphPayloadParser
-import org.credentialengine.cer.gremlin.GraphSourcePool
+import org.credentialengine.cer.gremlin.*
+import java.util.*
 
 class DeleteOne(
         envelopeDatabase: EnvelopeDatabase,
