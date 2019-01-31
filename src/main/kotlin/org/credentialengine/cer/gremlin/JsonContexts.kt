@@ -1,7 +1,7 @@
 package org.credentialengine.cer.gremlin
 
-import org.apache.tinkerpop.gremlin.structure.Graph
-import java.io.Console
+import mu.KotlinLogging
+import java.util.*
 
 data class GraphPrimitive(
         val transformed: Boolean,
@@ -10,7 +10,10 @@ data class GraphPrimitive(
         suffix: String?)
 
 class ContextTypes {
+    private val logger = KotlinLogging.logger {}
+
     private val contextTypes = hashMapOf<String, String>()
+
     fun clear() {
         contextTypes.clear()
     }
@@ -24,13 +27,17 @@ class ContextTypes {
             return GraphPrimitive(false, str, null, null)
         }
 
-        val type = contextTypes[key]
-        if (type == "xsd:date") {
-            return GraphPrimitive(true, str, DateConversion.dateToEpoch(str), "integer")
-        } else if (type == "xsd:dateTime") {
-            return GraphPrimitive(true, str, DateConversion.datetimeToEpoch(str), "integer")
-        } else if (type == "xsd:duration") {
-            return GraphPrimitive(true, str, DateConversion.durationToEpoch(str), "integer")
+        try {
+            val type = contextTypes[key]
+            if (type == "xsd:date") {
+                return GraphPrimitive(true, str, DateConversion.dateToEpoch(str), "integer")
+            } else if (type == "xsd:dateTime") {
+                return GraphPrimitive(true, str, DateConversion.datetimeToEpoch(str), "integer")
+            } else if (type == "xsd:duration") {
+                return GraphPrimitive(true, str, DateConversion.durationToEpoch(str), "integer")
+            }
+        } catch (e: Exception) {
+            logger.error(e.message, e)
         }
 
         return GraphPrimitive(false, str, null, null)

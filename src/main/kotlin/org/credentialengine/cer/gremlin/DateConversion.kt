@@ -9,23 +9,31 @@ import javax.xml.datatype.DatatypeFactory
 
 class DateConversion {
     companion object {
+        @JvmStatic
         val SystemZone = ZoneId.systemDefault()
+
+        @JvmStatic
         val dateParser = SimpleDateFormat("yyyy-MM-dd")
-        val datetimeParser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
+
+        @JvmStatic
         val datatypeFactory = DatatypeFactory.newDefaultInstance()
 
+        @JvmStatic
         fun dateToEpoch(value: String): Long {
             return dateParser.parse(value).time / 1000
         }
 
+        @JvmStatic
         fun datetimeToEpoch(value: String): Long {
-            return datetimeParser.parse(value).time / 1000
+            return Instant.parse(value).toEpochMilli() / 1000
         }
 
+        @JvmStatic
         fun durationToEpoch(value: String): Long {
             return datatypeFactory.newDuration(value).getTimeInMillis(Date.from(Instant.EPOCH)) / 1000;
         }
 
+        @JvmStatic
         fun timestampToEpoch(value: Timestamp): Long {
             return value.toLocalDateTime().atZone(SystemZone).toEpochSecond();
         }
