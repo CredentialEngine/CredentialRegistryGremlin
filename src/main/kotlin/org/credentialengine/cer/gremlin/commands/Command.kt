@@ -23,12 +23,20 @@ abstract class Command(
 
                 if (rel.fromType != null) {
                     t = t.hasLabel(rel.fromType)
+                } else if (relationships.knownTypes.containsKey(rel.fromId)) {
+                    t = t.hasLabel(relationships.knownTypes[rel.fromId])
+                } else if (relationships.relationshipsOnly) {
+                    t = t.hasLabel(Constants.GENERIC_LABEL)
                 }
 
                 t = t.has(Constants.GRAPH_ID_PROPERTY, rel.fromId).`as`("a").V()
 
                 if (rel.toType != null) {
                     t = t.hasLabel(rel.toType)
+                } else if (relationships.knownTypes.containsKey(rel.toId)) {
+                    t = t.hasLabel(relationships.knownTypes[rel.toId])
+                } else if (relationships.relationshipsOnly) {
+                    t = t.hasLabel(Constants.GENERIC_LABEL)
                 }
 
                 t.has(Constants.GRAPH_ID_PROPERTY, rel.toId).addE(rel.relType).from("a").iterate()

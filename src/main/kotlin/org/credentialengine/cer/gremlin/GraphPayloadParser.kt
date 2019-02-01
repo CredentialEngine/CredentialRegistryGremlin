@@ -31,6 +31,8 @@ open class GraphPayloadParser(
     }
 
     fun parseDocument(json: JsonObject, id: String, type: String, envelope: Envelope?) {
+        relationships.registerType(id, type)
+
         if (relationshipsOnly) {
             for (entry in json.entrySet()) {
                 val key = entry.key

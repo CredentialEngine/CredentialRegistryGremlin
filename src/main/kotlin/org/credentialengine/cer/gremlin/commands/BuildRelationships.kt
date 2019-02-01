@@ -14,6 +14,7 @@ class BuildRelationships(
 
     fun run() {
         val relationships = Relationships()
+        relationships.relationshipsOnly = true
 
         val progress = Progress(envelopeDatabase.getTotalEnvelopes(), 100) { current, total, percent ->
             logger.info {"Parsed $current out of $total envelopes (${String.format("%.2f", percent)}%)."}

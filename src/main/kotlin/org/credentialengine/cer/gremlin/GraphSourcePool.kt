@@ -48,8 +48,8 @@ class GraphSourcePool(configuration: Config) {
     init {
         val poolConfig = GenericObjectPoolConfig<ClusterAndTraversal>()
         val procs = Runtime.getRuntime().availableProcessors()
-        poolConfig.minIdle = procs
-        poolConfig.maxTotal = procs+1
+        poolConfig.minIdle = 1
+        poolConfig.maxTotal = 2
         pool = GenericObjectPool<ClusterAndTraversal>(ClusterAndTraversalFactory(configuration), poolConfig)
         pool.preparePool()
     }
