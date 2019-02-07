@@ -6,7 +6,8 @@ import org.credentialengine.cer.gremlin.*
 
 abstract class Command(
         protected val envelopeDatabase: EnvelopeDatabase,
-        protected val sourcePool: GraphSourcePool) {
+        protected val sourcePool: GraphSourcePool,
+        protected val commandType: CommandType) {
     private val logger = KotlinLogging.logger {}
 
     protected fun buildRelationships(relationships: Relationships) {
@@ -25,7 +26,7 @@ abstract class Command(
                     t = t.hasLabel(rel.fromType)
                 } else if (relationships.knownTypes.containsKey(rel.fromId)) {
                     t = t.hasLabel(relationships.knownTypes[rel.fromId])
-                } else if (relationships.relationshipsOnly) {
+                } else if (commandType == CommandType.BUILD_RELATIONSHIPS || commandType == CommandType.INDEX_ALL) {
                     t = t.hasLabel(Constants.GENERIC_LABEL)
                 }
 
@@ -35,7 +36,7 @@ abstract class Command(
                     t = t.hasLabel(rel.toType)
                 } else if (relationships.knownTypes.containsKey(rel.toId)) {
                     t = t.hasLabel(relationships.knownTypes[rel.toId])
-                } else if (relationships.relationshipsOnly) {
+                } else if (commandType == CommandType.BUILD_RELATIONSHIPS || commandType == CommandType.INDEX_ALL) {
                     t = t.hasLabel(Constants.GENERIC_LABEL)
                 }
 

@@ -3,6 +3,7 @@ package org.credentialengine.cer.gremlin.commands
 import mu.KotlinLogging
 import org.apache.tinkerpop.gremlin.driver.Client
 import org.apache.tinkerpop.gremlin.driver.Cluster
+import org.credentialengine.cer.gremlin.CommandType
 import org.credentialengine.cer.gremlin.Constants
 import org.credentialengine.cer.gremlin.EnvelopeDatabase
 import org.credentialengine.cer.gremlin.GraphSourcePool
@@ -10,7 +11,7 @@ import org.credentialengine.cer.gremlin.GraphSourcePool
 class CreateIndices(
         envelopeDatabase: EnvelopeDatabase,
         sourcePool: GraphSourcePool)
-    : Command(envelopeDatabase, sourcePool) {
+    : Command(envelopeDatabase, sourcePool, CommandType.CREATE_INDICES) {
     private val logger = KotlinLogging.logger {}
 
     fun run() {

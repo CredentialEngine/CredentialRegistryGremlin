@@ -15,7 +15,7 @@ import java.util.zip.GZIPOutputStream
 open class GraphPayloadParser(
         val sourcePool: GraphSourcePool,
         val relationships: Relationships,
-        val relationshipsOnly: Boolean = false,
+        val commandType: CommandType,
         val envelope: Envelope,
         val json: JsonObject,
         val contexts: JsonContexts) : Closeable {
@@ -33,7 +33,7 @@ open class GraphPayloadParser(
     fun parseDocument(json: JsonObject, id: String, type: String, envelope: Envelope?) {
         relationships.registerType(id, type)
 
-        if (relationshipsOnly) {
+        if (commandType == CommandType.BUILD_RELATIONSHIPS) {
             for (entry in json.entrySet()) {
                 val key = entry.key
                 val value = entry.value
@@ -50,11 +50,17 @@ open class GraphPayloadParser(
                         parseRelatedDocument(value.asJsonObject, type, id, key)
                     }
                     EntryType.REFERENCE -> {
-                        addRelationship(id, key, sliceId(value.asString))
+                        val valStr = value.asString
+                        if (credRegUrl(valStr)) {
+                            addRelationship(id, key, sliceId(valStr))
+                        }
                     }
                     EntryType.ARRAY_OF_REFERENCES -> {
                         for (itemEntry in value.asJsonArray) {
-                            addRelationship(id, key, sliceId(itemEntry.asString))
+                            val valStr = itemEntry.asString
+                            if (credRegUrl(valStr)){
+                                addRelationship(id, key, sliceId(valStr))
+                            }
                         }
                     }
                     EntryType.ARRAY_OF_OBJECTS -> {
@@ -109,11 +115,24 @@ open class GraphPayloadParser(
                     parseRelatedDocument(value.asJsonObject, type, id, key)
                 }
                 EntryType.REFERENCE -> {
-                    addRelationship(id, key, sliceId(value.asString))
+                    val valStr = value.asString
+                    if (credRegUrl(valStr)) {
+                        addRelationship(id, key, sliceId(valStr))
+                    } else {
+                        v = v.property(
+                                VertexProperty.Cardinality.single,
+                                key,
+                                valStr)
+                    }
                 }
                 EntryType.ARRAY_OF_REFERENCES -> {
                     for (itemEntry in value.asJsonArray) {
-                        addRelationship(id, key, sliceId(itemEntry.asString))
+                        val valStr = itemEntry.asString
+                        if (credRegUrl(valStr)) {
+                            addRelationship(id, key, sliceId(valStr))
+                        } else {
+                            literals.add(Pair(key, valStr) as Pair<String, JsonPrimitive>)
+                        }
                     }
                 }
                 EntryType.ARRAY_OF_OBJECTS -> {
@@ -141,7 +160,7 @@ open class GraphPayloadParser(
 
         for (chunk in literals.chunked(10)) {
             logger.debug { "Adding literal chunk for $id." }
-            var vlist = findV(id)
+            var vlist = findV(id, type)
             for (literal in chunk) {
                 vlist = vlist.property(VertexProperty.Cardinality.list, literal.first, literal.second)
             }
@@ -182,6 +201,10 @@ open class GraphPayloadParser(
         return key != "ceterms:ctid" && contexts.isRefKey(envelope.context, key)
     }
 
+    private fun credRegUrl(value: String): Boolean {
+        return value.startsWith("_") || value.contains("credentialengineregistry.org")
+    }
+
     private var completed = false
 
     protected val source = sourcePool.borrowSource()
@@ -191,7 +214,7 @@ open class GraphPayloadParser(
             return createV(id, type).property(VertexProperty.Cardinality.single, Constants.GENERATED_PROPERTY, true)
         }
 
-        if (source.g.V().has(Constants.GRAPH_ID_PROPERTY, id).hasNext()) {
+        if (source.g.V().has(Constants.GRAPH_ID_PROPERTY, id).hasLabel(type).hasNext()) {
             logger.debug { "Found existing resource for $id." }
             return recreateV(id, type)
         }
@@ -199,13 +222,16 @@ open class GraphPayloadParser(
         return createV(id, type)
     }
 
-    protected fun findV(id: String): GraphTraversal<Vertex, Vertex> {
-        return source.g.V().has(Constants.GRAPH_ID_PROPERTY, id)
+    protected fun findV(id: String, type: String): GraphTraversal<Vertex, Vertex> {
+        return source.g.V().has(Constants.GRAPH_ID_PROPERTY, id).hasLabel(type)
     }
 
     private fun recreateV(id: String, type: String): GraphTraversal<Vertex, Vertex> {
-        preserveEdges(id, type)
-        source.g.V().has(Constants.GRAPH_ID_PROPERTY, id).drop().iterate()
+        if (commandType == CommandType.INDEX_ONE) {
+            preserveEdges(id, type)
+        }
+
+        source.g.V().has(Constants.GRAPH_ID_PROPERTY, id).hasLabel(type).drop().iterate()
         return createV(id, type)
     }
 
@@ -215,7 +241,7 @@ open class GraphPayloadParser(
 
     private fun preserveEdges(id: String, type: String) {
         val g = source.g
-        val inEdges = g.V().has(Constants.GRAPH_ID_PROPERTY, id).inE().asAdmin()
+        val inEdges = g.V().has(Constants.GRAPH_ID_PROPERTY, id).hasLabel(type).inE().asAdmin()
         logger.debug { "Backing up ${inEdges.clone().count().next()} relationships." }
 
         for (e in inEdges) {

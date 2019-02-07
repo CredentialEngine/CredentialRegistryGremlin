@@ -8,11 +8,10 @@ import java.util.concurrent.atomic.AtomicInteger
 abstract class ParseCommand(
         envelopeDatabase: EnvelopeDatabase,
         sourcePool: GraphSourcePool,
+        commandType: CommandType,
         val contexts: JsonContexts)
-            : Command(envelopeDatabase, sourcePool) {
+            : Command(envelopeDatabase, sourcePool, commandType) {
     private val logger = KotlinLogging.logger {}
-
-    protected open val relationshipsOnly = false
 
     protected fun parseEnvelope(relationships: Relationships, id: Int, envelope: Envelope) {
         if (envelope.processedResource.has("@graph")) {
@@ -29,7 +28,7 @@ abstract class ParseCommand(
             val parser = GraphPayloadParser(
                     sourcePool,
                     relationships,
-                    relationshipsOnly,
+                    commandType,
                     envelope,
                     graphJson.asJsonObject,
                     contexts)
@@ -43,7 +42,7 @@ abstract class ParseCommand(
                 logger.error(e) { "There was a problem when parsing the document." }
             }
         }
-        if (parsedCount == graphItems.count() && !relationshipsOnly) {
+        if (parsedCount == graphItems.count() && commandType != CommandType.BUILD_RELATIONSHIPS) {
             logger.debug { "Updating document index time." }
             envelopeDatabase.updateIndexTime(id)
         }

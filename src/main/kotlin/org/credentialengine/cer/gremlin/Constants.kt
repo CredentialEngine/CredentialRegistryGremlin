@@ -7,6 +7,8 @@ object Constants {
 
     const val GENERATED_PREFIX = "__generated:"
 
+    const val BNODE_PREFIX = "_:"
+
     const val GENERIC_LABEL = "generic"
 
     const val PAYLOAD_PROPERTY = "__payload"

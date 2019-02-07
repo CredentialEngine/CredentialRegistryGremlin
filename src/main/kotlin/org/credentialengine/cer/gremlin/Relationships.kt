@@ -5,8 +5,6 @@ import java.util.concurrent.ConcurrentHashMap
 data class Relationship(val fromId: String, val relType: String, val toId: String, val fromType: String?, val toType: String?)
 
 class Relationships {
-    var relationshipsOnly = false
-
     private val relationships = ConcurrentHashMap<Relationship, Boolean>()
 
     val knownTypes = ConcurrentHashMap<String, String>()

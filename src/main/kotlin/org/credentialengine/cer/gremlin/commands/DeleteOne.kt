@@ -8,7 +8,7 @@ import java.util.*
 class DeleteOne(
         envelopeDatabase: EnvelopeDatabase,
         sourcePool: GraphSourcePool)
-            : Command(envelopeDatabase, sourcePool) {
+            : Command(envelopeDatabase, sourcePool, CommandType.DELETE_ONE) {
     private val logger = KotlinLogging.logger {}
 
     fun run(envelopeId: Int) {

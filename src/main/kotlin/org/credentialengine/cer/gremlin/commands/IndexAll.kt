@@ -7,7 +7,11 @@ class IndexAll(
         envelopeDatabase: EnvelopeDatabase,
         sourcePool: GraphSourcePool,
         contexts: JsonContexts)
-            : ParseCommand(envelopeDatabase, sourcePool, contexts) {
+            : ParseCommand(
+                envelopeDatabase,
+                sourcePool,
+                CommandType.INDEX_ALL,
+                contexts) {
     private val logger = KotlinLogging.logger {}
 
     fun run() {
