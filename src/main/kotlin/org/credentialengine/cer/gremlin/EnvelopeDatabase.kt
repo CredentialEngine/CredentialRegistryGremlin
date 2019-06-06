@@ -5,7 +5,9 @@ import com.google.gson.JsonParser
 import com.zaxxer.hikari.HikariDataSource
 import mu.KotlinLogging
 import java.sql.Timestamp
-import java.time.ZoneId
+import java.util.*
+import java.util.concurrent.TimeUnit
+import java.text.SimpleDateFormat
 
 data class JsonContext(val url: String, val jsonObject: JsonObject)
 data class JsonSchema(val id: Int, val name: String, val jsonObject: JsonObject)
@@ -13,7 +15,7 @@ data class Envelope(val id: Int, val processedResource: JsonObject, val createdA
     val context: String = processedResource.get("@context").asString
 }
 
-class EnvelopeDatabase(val dataSource: HikariDataSource) {
+class EnvelopeDatabase(val config: Config, val dataSource: HikariDataSource) {
     private val logger = KotlinLogging.logger {}
 
     fun fetchEnvelope(envelopeId: Int): Envelope? {
@@ -54,6 +56,32 @@ class EnvelopeDatabase(val dataSource: HikariDataSource) {
                     "FROM envelopes " +
                     "WHERE deleted_at IS NULL " +
                     "AND (processed_resource->'@graph') IS NOT NULL " +
+                    "ORDER BY id").use { sta ->
+                sta.executeQuery().use { rs ->
+                    while (rs.next())
+                    {
+                        ids.add(rs.getInt(1))
+                    }
+                }
+            }
+        }
+
+        return ids.toList()
+    }
+
+    fun getDeletedEnvelopeIds(): List<Int> {
+        val ids = mutableListOf<Int>()
+
+        val date = Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(config.deletionPeriod.toLong()))
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
+        format.timeZone = TimeZone.getTimeZone("UTC")
+        val formattedDate = format.format(date)
+
+        dataSource.connection.use { con ->
+            con.prepareStatement("" +
+                    "SELECT id " +
+                    "FROM envelopes " +
+                    "WHERE deleted_at > '$formattedDate' " +
                     "ORDER BY id").use { sta ->
                 sta.executeQuery().use { rs ->
                     while (rs.next())

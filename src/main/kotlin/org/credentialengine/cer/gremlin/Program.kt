@@ -22,7 +22,7 @@ val cerModule = applicationContext {
         hikariConfig.maxLifetime = 60 * 2 * 1000
         HikariDataSource(hikariConfig)
     }
-    bean { EnvelopeDatabase(get()) }
+    bean { EnvelopeDatabase(get(), get()) }
     bean { GraphSourcePool(get()) }
     bean { JsonContexts(get()) }
     bean {

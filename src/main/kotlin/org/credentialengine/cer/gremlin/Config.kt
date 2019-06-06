@@ -27,4 +27,6 @@ class Config {
         get() = System.getenv("POSTGRESQL_PASSWORD") ?: "rsaksida"
     val redisUrl: String
         get() = System.getenv("REDIS_URL") ?: "redis://localhost:6379"
+    val deletionPeriod: Int
+        get()  = parseInt(System.getenv("DELETION_PERIOD") ?: "7")
 }
