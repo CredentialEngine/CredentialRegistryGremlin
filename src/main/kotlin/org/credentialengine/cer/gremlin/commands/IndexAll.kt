@@ -31,8 +31,19 @@ class IndexAll(
         }
 
         buildRelationships(relationships)
+        deleteEnvelopes()
         removeOrphans()
 
         logger.info {"Done."}
+    }
+
+    private fun deleteEnvelopes() {
+        val ids = envelopeDatabase.getDeletedEnvelopeIds()
+
+        logger.info {"Deleting ${ids.size} Envelopes."}
+
+        for (id in ids) {
+            deleteEnvelope(id)
+        }
     }
 }
