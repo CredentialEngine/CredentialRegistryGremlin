@@ -58,3 +58,16 @@ compileKotlin {
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
+
+distributions {
+    main {
+        contents {
+            into('bin') {
+                from {
+                    'src/main/scripts/start.sh'
+                }
+                fileMode 0755
+            }
+        }
+    }
+}
