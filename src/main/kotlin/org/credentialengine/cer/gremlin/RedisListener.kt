@@ -68,6 +68,7 @@ class RedisListener(
                         "index_all" -> {  commandCreator.create<IndexAll>().run() }
                         "build_relationships" -> {  commandCreator.create<BuildRelationships>().run() }
                         "delete_one" -> {  commandCreator.create<DeleteOne>().run(message.id) }
+                        "remove_orphans" -> { commandCreator.create<RemoveOrphans>().run() }
                         "update_contexts" -> {
                             jsonContexts.updateContexts()
                             logger.info { "Done." }
