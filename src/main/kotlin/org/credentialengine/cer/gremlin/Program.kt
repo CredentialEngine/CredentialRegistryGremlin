@@ -36,6 +36,7 @@ val cerModule = applicationContext {
     factory { IndexAll(get(), get(), get()) }
     factory { IndexOne(get(), get(), get()) }
     factory { BuildRelationships(get(), get(), get()) }
+    factory { RemoveOrphans(get(), get(), get()) }
 }
 
 fun main(args : Array<String>) {
