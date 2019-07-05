@@ -2,13 +2,30 @@ package org.credentialengine.cer.gremlin.commands
 
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.`__`.inE
 import mu.KotlinLogging
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
+import org.apache.tinkerpop.gremlin.structure.Vertex
 import org.credentialengine.cer.gremlin.*
+
+const val ORPHAN_BATCH_SIZE = 10_000
 
 abstract class Command(
         protected val envelopeDatabase: EnvelopeDatabase,
         protected val sourcePool: GraphSourcePool,
         protected val commandType: CommandType) {
     private val logger = KotlinLogging.logger {}
+
+    private val orphans: GraphTraversal<Vertex, Vertex>
+        get() {
+            var traversal: GraphTraversal<Vertex, Vertex>? = null
+
+            sourcePool.withSource { source ->
+                traversal = source.g.V().has(Constants.GENERATED_PROPERTY).not(inE())
+            }
+
+            return traversal!!
+        }
+
+    private val orphansCount get() = orphans.count().next().toInt()
 
     protected fun buildRelationships(relationships: Relationships) {
         val rels = relationships.finalise()
@@ -80,11 +97,22 @@ abstract class Command(
     }
 
     protected fun removeOrphans() {
-        sourcePool.withSource { source ->
-            logger.info {"Removing orphan generated objects."}
+        val total = orphansCount
 
-            while (source.g.V().has(Constants.GENERATED_PROPERTY).not(inE()).count().next().toInt() != 0) {
-                source.g.V().has(Constants.GENERATED_PROPERTY).not(inE()).drop().iterate()
+        logger.info { "Removing $total orphan generated objects." }
+
+        val progress = Progress(total, ORPHAN_BATCH_SIZE) { cur, _, pct ->
+            logger.info { "Removed $cur out of $total orphan generated objects (${String.format("%.2f", pct)}%)." }
+        }
+
+        while (true) {
+            orphans.limit(ORPHAN_BATCH_SIZE.toLong()).drop().iterate()
+
+            val remaining = orphansCount
+            progress.current = total - remaining
+
+            if (remaining == 0) {
+                break
             }
         }
     }
